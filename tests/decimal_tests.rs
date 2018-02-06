@@ -1019,3 +1019,15 @@ fn it_can_parse_individual_parts() {
     let pi = Decimal::from_parts(1102470952, 185874565, 1703060790, false, 28);
     assert_eq!(pi.to_string(), "3.1415926535897932384626433832");
 }
+
+#[test]
+fn it_can_parse_scientific_notation() {
+    let small = "9.9e-7";
+
+    assert_eq!(Decimal::new(99, 8), Decimal::from_str(small).unwrap());
+
+    let positive = "1.2e+1";
+    assert_eq!(Decimal::new(12, 0), Decimal::from_str(positive).unwrap());
+    let positive = "1.2e1";
+    assert_eq!(Decimal::new(12, 0), Decimal::from_str(positive).unwrap());
+}

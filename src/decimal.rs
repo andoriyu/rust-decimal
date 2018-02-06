@@ -712,6 +712,30 @@ impl Decimal {
             flags: flags(!positive, -exponent10 as u32),
         })
     }
+
+    fn from_scientific(value: &str) -> Result<Decimal, Error> {
+        let err = Error::new("Failed to parse");
+        let mut split = value.splitn(2, 'e');
+
+        let base = split.next().ok_or(err.clone())?;
+        let mut scale = split.next().ok_or(err.clone())?.to_string();
+
+        let mut ret = Decimal::from_str(base)?;
+
+        if scale.contains('-') {
+            scale.remove(0);
+           let scale: u32 = scale.as_str().parse().map_err(move |_| err.clone())?;
+           let current_scale = ret.scale();
+           ret.set_scale(current_scale+ scale)?;
+        } else {
+            if scale.contains('+') {
+                scale.remove(0);
+            }
+            let pow: u32 = scale.as_str().parse().map_err(move |_| err.clone())?;
+            ret *= Decimal::from_i64(10_i64.pow(pow)).unwrap();
+        }
+        Ok(ret)
+    }
 }
 
 #[inline]
@@ -1310,6 +1334,10 @@ impl FromStr for Decimal {
     fn from_str(value: &str) -> Result<Decimal, Self::Err> {
         if value.is_empty() {
             return Err(Error::new("Invalid decimal: empty"));
+        }
+
+        if value.contains('e') {
+            return Decimal::from_scientific(value);
         }
 
         let mut offset = 0;
